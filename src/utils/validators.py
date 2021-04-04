@@ -51,3 +51,10 @@ def validate_name(name):
 def validate_country(country):
     if not country:
         raise InvalidBody("You must provide a country", status=400)
+
+
+def validate_company_assignment(body):
+    try:
+        _ = body['user_id']
+    except KeyError:
+        raise InvalidBody("You must provide an user", status=400)

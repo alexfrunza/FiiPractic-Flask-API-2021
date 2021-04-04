@@ -1,13 +1,17 @@
+import datetime
+
 from src.adapters.user import UserAdapter
+from src.models.rest import Rest
 from src.models.base import Base
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 
-from src.utils.exceptions import Conflict
+from src.utils.exceptions import Conflict, HTTPException
 from src.utils.validators import validate_user_body, partial_validate_user_body
 
 
-class User(Base, UserAdapter):
+class User(Base, UserAdapter, Rest):
     __tablename__ = 'user'
+    search_fields = ['email', 'first_name', 'last_name']
 
     id = Column(Integer, primary_key=True)
     email = Column(String(100), unique=True, nullable=False)
@@ -25,9 +29,14 @@ class User(Base, UserAdapter):
     session_create_time = Column(DateTime)
 
     @classmethod
-    def get_users(cls, context):
-        results = context.query(cls).all()
-        return cls.to_json(results)
+    def get_users(cls, context, request):
+        query = context.query(cls)
+        query = cls.add_search(query, request)
+        total = query.count()
+        query = query.order_by(cls.id)
+        query = cls.add_pagination(query, request)
+        results = query.all()
+        return cls.to_json(total, results)
 
     @classmethod
     def create_user(cls, context, body):
@@ -77,3 +86,40 @@ class User(Base, UserAdapter):
     @classmethod
     def get_user_by_email(cls, context, email):
         return context.query(cls).filter_by(email=email).first()
+
+    @classmethod
+    def get_user_by_session(cls, context, session_id):
+        return context.query(cls).filter_by(session=session_id).first()
+
+    @classmethod
+    def login(cls, context, body):
+        user = cls.get_user_by_email(context, body.get('email'))
+        if not user:
+            raise HTTPException("The email or the password is incorrect", status=400)
+
+        password, _ = cls.generate_password(body.get('password'), user.salt.encode('utf-8'))
+        if password != user.password:
+            raise HTTPException("The email or the password is incorrect", status=400)
+
+        session_id = cls.generate_session()
+        user.session = session_id
+        user.session_create_time = datetime.datetime.now()
+
+        context.commit()
+        return session_id
+
+    @classmethod
+    def logout(cls, context, session_id):
+        user = User.get_user_by_session(context, session_id)
+        if not user:
+            raise HTTPException("User not found", status=400)
+
+        user.session = None
+        context.commit()
+
+
+
+
+
+
+

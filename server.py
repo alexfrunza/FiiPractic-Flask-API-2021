@@ -7,6 +7,7 @@ from flask import Flask
 from database_management import build_sqlite_connection_string, init_database_connection
 from src.endpoints.user import user_bp
 from src.endpoints.company import company_bp
+from src.endpoints.login import login_bp
 
 
 def configure_app(application):
@@ -19,6 +20,7 @@ app = Flask(__name__)
 configure_app(app)
 app.register_blueprint(user_bp)
 app.register_blueprint(company_bp)
+app.register_blueprint(login_bp)
 
 
 @app.route('/status', methods=['GET'])

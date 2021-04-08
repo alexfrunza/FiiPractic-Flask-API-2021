@@ -4,7 +4,9 @@ import hashlib
 from numpy import random
 import datetime
 
+import settings
 from src.models.base import Base
+from src.services.email import EmailService
 from src.utils.exceptions import HTTPException
 
 
@@ -25,7 +27,13 @@ class EmailToken(Base):
         if not result:
             raise HTTPException("Invalid token", status=400)
 
-        if datetime.datetime.now() - result.create_time > datetime.timedelta(minutes=15):
+        if datetime.datetime.now() - result.create_time > datetime.timedelta(hours=48):
             raise HTTPException("The token has expired", status=400)
 
         return result
+
+    def send_token_for_verification(self, context, user):
+        self.generate_token()
+        context.commit()
+        email_service = EmailService(settings.SENDGRID_API_KEY, settings.EMAIL_ADDRESS)
+        email_service.send_confirmation_email(user, self.token)

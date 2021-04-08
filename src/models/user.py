@@ -53,12 +53,8 @@ class User(Base, UserAdapter, Rest):
         context.commit()
 
         email_token = EmailToken(user_id=user.id)
-        email_token.generate_token()
         context.add(email_token)
-        context.commit()
-
-        email_service = EmailService(settings.SENDGRID_API_KEY, settings.EMAIL_ADDRESS)
-        email_service.send_confirmation_email(user, email_token.token)
+        email_token.send_token_for_verification(context, user)
 
     @classmethod
     def update_user(cls, context, body, user_id):
@@ -142,23 +138,11 @@ class User(Base, UserAdapter, Rest):
         context.commit()
 
     @classmethod
-    def resend_email_confirmation(cls, context, user_id):
-        user = cls.get_user_by_id(context, user_id)
+    def resend_email_confirmation(cls, context, user):
         if user.active:
             raise HTTPException("This account it's already activated", status=400)
 
-        email_token = context.query(EmailToken).filter_by(user_id=user_id).first()
-        email_token.generate_token()
+        email_token = context.query(EmailToken).filter_by(user_id=user.id).first()
+
         email_token.create_time = datetime.datetime.now()
-        context.commit()
-
-        email_service = EmailService(settings.SENDGRID_API_KEY, settings.EMAIL_ADDRESS)
-        email_service.send_confirmation_email(user, email_token.token)
-
-
-
-
-
-
-
-
+        email_token.send_token_for_verification(context, user)

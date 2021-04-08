@@ -58,3 +58,19 @@ def validate_company_assignment(body):
         _ = body['user_id']
     except KeyError:
         raise InvalidBody("You must provide an user", status=400)
+
+
+def validate_phone_number(number):
+    # Used for Testing purposes
+    if not number:
+        raise Exception("Please provide a phone number.")
+
+    if number.startswith('+40') or number.startswith('07'):
+        if number[0] == "+":
+            number = number[1:]
+
+        if 9 < len(number) < 15:
+            if number.isdigit():
+                return
+
+    raise Exception("Invalid phone number.")

@@ -1,10 +1,13 @@
 import datetime
 
+import settings
 from src.adapters.user import UserAdapter
+from src.models.email_token import EmailToken
 from src.models.rest import Rest
 from src.models.base import Base
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 
+from src.services.email import EmailService
 from src.utils.exceptions import Conflict, HTTPException
 from src.utils.validators import validate_user_body, partial_validate_user_body
 
@@ -20,7 +23,7 @@ class User(Base, UserAdapter, Rest):
     phone = Column(String(15))
 
     admin = Column(Boolean, default=False)
-    active = Column(Boolean, default=True)
+    active = Column(Boolean, default=False)
 
     password = Column(String(500), nullable=False)
     salt = Column(String(500))
@@ -48,6 +51,14 @@ class User(Base, UserAdapter, Rest):
         user.to_object(body)
         context.add(user)
         context.commit()
+
+        email_token = EmailToken(user_id=user.id)
+        email_token.generate_token()
+        context.add(email_token)
+        context.commit()
+
+        email_service = EmailService(settings.SENDGRID_API_KEY, settings.EMAIL_ADDRESS)
+        email_service.send_confirmation_email(user, email_token.token)
 
     @classmethod
     def update_user(cls, context, body, user_id):
@@ -112,10 +123,38 @@ class User(Base, UserAdapter, Rest):
     def logout(cls, context, session_id):
         user = User.get_user_by_session(context, session_id)
         if not user:
-            raise HTTPException("User not found", status=400)
+            raise HTTPException("User not found", status=404)
 
         user.session = None
         context.commit()
+
+    @classmethod
+    def activate_user(cls, context, token):
+        token = EmailToken.get_email_token(context, token)
+        user = cls.get_user_by_id(context, token.user_id)
+
+        if not user:
+            raise HTTPException("User not found", status=404)
+        if user.active:
+            raise HTTPException("This account it's already activated", status=400)
+
+        user.active = True
+        context.commit()
+
+    @classmethod
+    def resend_email_confirmation(cls, context, user_id):
+        user = cls.get_user_by_id(context, user_id)
+        if user.active:
+            raise HTTPException("This account it's already activated", status=400)
+
+        email_token = context.query(EmailToken).filter_by(user_id=user_id).first()
+        email_token.generate_token()
+        email_token.create_time = datetime.datetime.now()
+        context.commit()
+
+        email_service = EmailService(settings.SENDGRID_API_KEY, settings.EMAIL_ADDRESS)
+        email_service.send_confirmation_email(user, email_token.token)
+
 
 
 

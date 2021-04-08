@@ -104,3 +104,13 @@ def action_log(action):
             return res
         return wrapper
     return inner
+
+
+def is_active(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        user = kwargs['user']
+        if not user.active:
+            raise HTTPException("You need to verify your account", status=403)
+        return func(*args, **kwargs)
+    return wrapper

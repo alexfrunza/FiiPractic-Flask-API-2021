@@ -4,7 +4,9 @@
 
 from flask import Flask
 
+import settings
 from database_management import build_sqlite_connection_string, init_database_connection
+from src.endpoints.email import email_bp
 from src.endpoints.user import user_bp
 from src.endpoints.company import company_bp
 from src.endpoints.login import login_bp
@@ -21,6 +23,7 @@ configure_app(app)
 app.register_blueprint(user_bp)
 app.register_blueprint(company_bp)
 app.register_blueprint(login_bp)
+app.register_blueprint(email_bp)
 
 
 @app.route('/status', methods=['GET'])
@@ -32,7 +35,8 @@ def main():
     """
         Fii practic - Server main
     """
-    app.run(debug=True)
+    debug = settings.ENVIRONMENT == 'DEV'
+    app.run(debug=debug, host=settings.SERVER_HOST, port=settings.SERVER_PORT)
 
 
 if __name__ == '__main__':

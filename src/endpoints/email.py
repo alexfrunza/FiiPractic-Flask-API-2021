@@ -15,10 +15,10 @@ def activate_user(context):
     return Response(status=200, response="Account activated")
 
 
-@email_bp.route('/resend-email-confirmation', methods=["PATCH"])
+@email_bp.route('/resend-email-confirmation', methods=["POST"])
 @http_handling
 @session
 @is_authorized
 def resend_email_confirmation(context, user):
-    User.resend_email_confirmation(context, user.id)
+    User.resend_email_confirmation(context, user)
     return Response(status=200, response="Email confirmation sent")

@@ -11,7 +11,7 @@ login_bp = Blueprint('authorization', __name__, url_prefix='/')
 @http_handling
 def login(context):
     session_id = User.login(context, request.json)
-    return Response(response=json.dumps({"session_id": session_id}), status=200)
+    return Response(response=json.dumps({"session_id": session_id}), status=200, content_type='application/json')
 
 
 @login_bp.route('logout', methods=['POST'])
@@ -20,4 +20,4 @@ def login(context):
 def logout(context):
     session_id = request.headers.get('Authorization')
     User.logout(context, session_id)
-    return Response(response=json.dumps({'message': "Logged out successfully"}), status=200)
+    return Response(response=json.dumps({'message': "Logged out successfully"}), status=200, content_type='application/json')

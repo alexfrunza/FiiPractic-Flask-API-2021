@@ -41,9 +41,9 @@ def http_handling(func):
             status = getattr(e, 'status', 500)
 
             if status == 500:
-                return Response(status=status, response=json.dumps({"error": "Server error"}))
+                return Response(status=status, response=json.dumps({"error": "Server error"}), content_type='application/json')
 
-            return Response(status=status, response=json.dumps({'error': e.args[0]}))
+            return Response(status=status, response=json.dumps({'error': e.args[0]}), content_type='application/json')
 
     return wrapper
 

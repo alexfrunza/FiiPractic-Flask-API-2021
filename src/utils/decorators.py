@@ -39,6 +39,10 @@ def http_handling(func):
         except Exception as e:
             logger.error(str(e), exc_info=True)
             status = getattr(e, 'status', 500)
+
+            if status == 500:
+                return Response(status=status, response=json.dumps({"error": "Server error"}))
+
             return Response(status=status, response=json.dumps({'error': e.args[0]}))
 
     return wrapper

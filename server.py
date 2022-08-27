@@ -13,7 +13,7 @@ from src.endpoints.login import login_bp
 
 
 def configure_app(application):
-    database_file_path = 'fii_practic_database'
+    database_file_path = 'db/fii_practic_database'
     connection_string = build_sqlite_connection_string(database_file_path)
     init_database_connection(connection_string)
 

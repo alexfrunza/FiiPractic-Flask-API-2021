@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  web:
+    environment:
+      - SERVER_PORT=${SERVER_PORT}
+      - SERVER_HOST=${SERVER_HOST}
+      - ENVIRONMENT=${ENVIRONMENT}
+      - EMAIL_ADDRESS=${EMAIL_ADDRESS}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+    networks:
+      - mynet
+    image: fiipractic-python
+    build: .
+    command: >
+      sh -c "python server.py"
+    volumes:
+      - ${LOCAL_DB_FOLDER}:/app/db
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+networks:
+  mynet:
+    driver: bridge

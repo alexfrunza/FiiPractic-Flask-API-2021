@@ -1,0 +1,10 @@
+# Python env
+venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# sqlite3 database
+fii_practic_database
+db/
